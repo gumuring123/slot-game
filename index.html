@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Master Slot Online</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <style>
+        /* (디자인 스타일 - 생략하지 말고 모두 복사하세요) */
+        body { background: #121212; color: white; text-align: center; font-family: sans-serif; }
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .modal { background: #222; padding: 40px; border-radius: 20px; border: 2px solid #f1c40f; }
+        .slot-container { display: flex; justify-content: center; gap: 10px; margin: 40px 0; }
+        .slot { width: 100px; height: 100px; background: white; color: black; font-size: 50px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+        #console { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #000; padding: 10px; color: #0f0; border-top: 1px solid #0f0; }
+        #console-input { background: none; border: none; color: #0f0; width: 80%; outline: none; }
+    </style>
+</head>
+<body>
+
+<div id="auth-overlay">
+    <div id="step-1" class="modal">
+        <h2>🚀 게임 접속</h2>
+        <button onclick="window.gameHandle.login()" style="padding: 15px 30px; cursor:pointer;">Google 계정 인증</button>
+    </div>
+    <div id="step-2" class="modal" style="display:none;">
+        <h2>🔐 프로필 설정</h2>
+        <input type="text" id="reg-id" placeholder="게임 아이디"><br><br>
+        <input type="password" id="reg-pw" placeholder="비밀번호"><br><br>
+        <button onclick="window.gameHandle.completeReg()" style="padding: 10px 20px; cursor:pointer;">게임 시작</button>
+    </div>
+</div>
+
+<div id="game-ui" style="display:none;">
+    <div style="padding: 20px; text-align: right;">
+        [ <span id="ui-id">-</span> ] 소지금: <span id="ui-balance">0</span>원
+    </div>
+    <div class="slot-container">
+        <div class="slot" id="s1">❓</div>
+        <div class="slot" id="s2">❓</div>
+        <div class="slot" id="s3">❓</div>
+    </div>
+    <button onclick="window.gameHandle.spin()" style="padding: 20px 50px; font-size: 20px; cursor:pointer;">🎰 슬롯 돌리기 (100원)</button>
+</div>
+
+<div id="console">
+    <span>admin@root:~$ </span><input type="text" id="console-input">
+</div>
+
+<script>
+(function() {
+    // 🔥 [중요] 여기에 본인의 Firebase Config 정보를 붙여넣으세요!
+    const firebaseConfig = {
+  apiKey: "AIzaSyBF9sb_UYjPt6J_O7g6p4FkLSbggUC6cfM",
+  authDomain: "gumurings-slot-game.firebaseapp.com",
+  projectId: "gumurings-slot-game",
+  storageBucket: "gumurings-slot-game.firebasestorage.app",
+  messagingSenderId: "1006027725856",
+  appId: "1:1006027725856:web:b7e5d7b55eac14dc377045"
+};
+
+    const ADMIN_EMAIL = "본인의_구글_이메일@gmail.com"; // 👈 본인 이메일로 수정!
+
+    // 초기화
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let balance = 0;
+    let myUID = "";
+
+    window.gameHandle = {
+        login: async function() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const res = await auth.signInWithPopup(provider);
+            myUID = res.user.uid;
+            this.checkUser();
+        },
+        checkUser: async function() {
+            const doc = await db.collection("users").doc(myUID).get();
+            if (doc.exists) {
+                balance = doc.data().balance;
+                this.initGame(doc.data().gameId);
+            } else {
+                document.getElementById('step-1').style.display = 'none';
+                document.getElementById('step-2').style.display = 'block';
+            }
+        },
+        completeReg: async function() {
+            const gid = document.getElementById('reg-id').value;
+            const gpw = document.getElementById('reg-pw').value;
+            if(!gid) return;
+            await db.collection("users").doc(myUID).set({ gameId: gid, gamePw: gpw, balance: 1000, email: auth.currentUser.email });
+            balance = 1000;
+            this.initGame(gid);
+        },
+        initGame: function(id) {
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'block';
+            document.getElementById('ui-id').innerText = id;
+            this.updateUI();
+        },
+        spin: async function() {
+            if(balance < 100) return alert("돈이 부족합니다.");
+            balance -= 100;
+            const icons = ['💎', '💰', '🍀', '💣'];
+            const r = [icons[Math.floor(Math.random()*4)], icons[Math.floor(Math.random()*4)], icons[Math.floor(Math.random()*4)]];
+            document.getElementById('s1').innerText = r[0];
+            document.getElementById('s2').innerText = r[1];
+            document.getElementById('s3').innerText = r[2];
+            
+            if(r[0] === r[1] && r[1] === r[2]) {
+                balance += 1000;
+                alert("잭팟! 1000원 획득");
+            }
+            this.updateUI();
+            await db.collection("users").doc(myUID).update({ balance: balance });
+        },
+        updateUI: function() {
+            document.getElementById('ui-balance').innerText = balance.toLocaleString();
+        }
+    };
+
+    // 어드민 전용 기능 ( ` 키)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '`' && auth.currentUser?.email === ADMIN_EMAIL) {
+            const con = document.getElementById('console');
+            con.style.display = con.style.display === 'block' ? 'none' : 'block';
+            document.getElementById('console-input').focus();
+        }
+    });
+
+    document.getElementById('console-input').addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+            const cmd = e.target.value.split(' ');
+            if (cmd[0] === '/set' && cmd[1] === 'me' && cmd[2] === 'coin') {
+                balance = parseInt(cmd[3]);
+                window.gameHandle.updateUI();
+                await db.collection("users").doc(myUID).update({ balance: balance });
+            }
+            e.target.value = '';
+        }
+    });
+})();
+</script>
+</body>
+</html>
