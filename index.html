@@ -8,9 +8,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     
     <style>
-        /* --- [기존 디자인 유지] --- */
+        /* --- [기존 디자인 및 신규 UI 스타일] --- */
         body { font-family: 'Malgun Gothic', sans-serif; background-color: #2c3e50; color: white; text-align: center; margin: 0; padding: 0; user-select: none; }
-        #balance-ui { position: absolute; top: 20px; right: 30px; font-size: 24px; font-weight: bold; background: rgba(0, 0, 0, 0.5); padding: 15px 25px; border-radius: 10px; border: 2px solid #f1c40f; }
+        
+        /* 오른쪽 상단 소지금 및 아이디 UI */
+        #balance-ui { position: absolute; top: 20px; right: 30px; font-size: 20px; font-weight: bold; background: rgba(0, 0, 0, 0.6); padding: 15px; border-radius: 10px; border: 2px solid #f1c40f; text-align: right; min-width: 150px; }
+        .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: #ecf0f1; border-bottom: 1px solid #7f8c8d; padding-bottom: 8px; }
+        .logout-btn { cursor: pointer; font-size: 20px; transition: 0.2s; text-decoration: none; }
+        .logout-btn:hover { transform: scale(1.2); }
+        .money-info { font-size: 24px; color: white; }
+
         h1 { margin-top: 80px; color: #ecf0f1; }
         .slot-container { display: flex; justify-content: center; gap: 15px; margin: 30px 0; }
         .slot { width: 120px; height: 120px; background: #ecf0f1; border-radius: 15px; border: 5px solid #bdc3c7; font-size: 70px; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.2); color: black; }
@@ -27,10 +34,12 @@
         .grind-area { background: #27ae60; padding: 20px; border-radius: 15px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .btn-grind { background: #f1c40f; color: #2c3e50; font-size: 20px; padding: 15px 30px; margin-top: 10px; }
         
-        /* --- [추가된 로그인 및 콘솔 디자인] --- */
+        /* 로그인 창 모달 */
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .modal { background: #34495e; padding: 40px; border-radius: 20px; border: 3px solid #f1c40f; text-align: center; }
-        .modal input { padding: 10px; margin: 10px; border-radius: 5px; border: none; width: 220px; font-size: 16px; }
+        .modal { background: #34495e; padding: 40px; border-radius: 20px; border: 3px solid #f1c40f; text-align: center; width: 300px; }
+        .modal input { padding: 12px; margin: 8px 0; border-radius: 5px; border: none; width: 90%; font-size: 16px; box-sizing: border-box; }
+        
+        /* 콘솔창 */
         #console { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.9); padding: 15px; box-sizing: border-box; text-align: left; border-top: 2px solid #2ecc71; z-index: 1000; }
         #console-input { width: 80%; background: transparent; border: none; color: #2ecc71; font-size: 18px; outline: none; font-family: monospace; }
         #console-prefix { color: #2ecc71; font-size: 18px; font-family: monospace; margin-right: 10px; }
@@ -39,27 +48,42 @@
 <body>
 
     <div id="auth-overlay">
-        <div id="step-1" class="modal">
-            <h1 style="margin-top:0;">🚀 게임 접속</h1>
-            <button onclick="window.game.login()" style="padding: 15px 30px; background:#4285F4; color:white; border:none; border-radius:10px; cursor:pointer; font-size:18px;">Google 계정으로 시작</button>
+        <div id="step-login" class="modal">
+            <h1 style="margin-top:0; color:#f1c40f;">🚀 게임 접속</h1>
+            <input type="text" id="login-id" placeholder="아이디"><br>
+            <input type="password" id="login-pw" placeholder="비밀번호"><br>
+            <button onclick="window.game.loginIdPw()" style="padding: 12px; background:#2ecc71; color:white; border-radius:8px; width:100%; margin-top:10px;">로그인</button>
+            
+            <hr style="border:0; border-top:1px solid #7f8c8d; margin: 25px 0;">
+            <p style="font-size: 14px; color: #bdc3c7; margin-bottom:10px;">계정이 없으신가요?</p>
+            <button onclick="window.game.registerGoogle()" style="padding: 12px; background:#4285F4; color:white; border-radius:8px; width:100%;">구글로 회원가입 및 아이디 생성</button>
         </div>
-        <div id="step-2" class="modal" style="display:none;">
-            <h2>📝 프로필 생성</h2>
-            <input type="text" id="reg-id" placeholder="사용할 닉네임"><br>
+
+        <div id="step-register" class="modal" style="display:none;">
+            <h2 style="color:#f1c40f;">📝 프로필 생성</h2>
+            <p style="font-size:14px;">사용할 아이디와 비밀번호를 정해주세요.</p>
+            <input type="text" id="reg-id" placeholder="사용할 아이디"><br>
             <input type="password" id="reg-pw" placeholder="비밀번호 설정"><br>
-            <button onclick="window.game.completeReg()" style="padding: 10px 20px; background:#27ae60; color:white; border:none; border-radius:5px; cursor:pointer; margin-top:10px;">게임 시작하기</button>
+            <button onclick="window.game.completeReg()" style="padding: 12px; background:#e74c3c; color:white; border-radius:8px; width:100%; margin-top:10px;">계정 생성하기</button>
         </div>
     </div>
 
     <div id="game-ui" style="display:none;">
-        <div id="balance-ui">총 소지금: <span id="balance">0</span>원</div>
+        <div id="balance-ui">
+            <div class="user-info">
+                <span>👤 <span id="display-id">Guest</span></span>
+                <span class="logout-btn" onclick="window.game.logout()" title="로그아웃">➡️</span>
+            </div>
+            <div class="money-info">💰 <span id="balance">0</span>원</div>
+        </div>
+
         <h1>🎰 어드민 슬롯머신 🎰</h1>
         <div class="slot-container">
             <div class="slot" id="slot1">❓</div>
             <div class="slot" id="slot2">❓</div>
             <div class="slot" id="slot3">❓</div>
         </div>
-        <div id="message">환영합니다! 명령어를 사용하려면 ` 키를 누르세요.</div>
+        <div id="message">환영합니다!</div>
         <div class="controls">
             <div class="bet-info">현재 베팅금: <span id="current-bet">0</span>원</div>
             <div class="bet-buttons">
@@ -85,7 +109,7 @@
 
     <div id="console">
         <span id="console-prefix">>_</span>
-        <input type="text" id="console-input" placeholder="커맨드 입력: /set me coin 1000" autocomplete="off">
+        <input type="text" id="console-input" placeholder="명령어 입력... (예: /give admin coin 1000)" autocomplete="off">
     </div>
 
     <script>
@@ -99,7 +123,7 @@
 		messagingSenderId: "1006027725856",
 		appId: "1:1006027725856:web:b7e5d7b55eac14dc377045"
 		};
-        const ADMIN_EMAIL = "gumuring123@gmail.com"; // 👈 치트 권한용 이메일
+        const ADMIN_ID = "gumuring"; // 👈 치트 권한을 가질 [게임 아이디]를 적으세요 (이메일 아님!)
         // ------------------
 
         firebase.initializeApp(firebaseConfig);
@@ -116,57 +140,105 @@
         const symbols = Object.keys(probabilities);
 
         window.game = {
-            login: async function() {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                const res = await auth.signInWithPopup(provider);
-                myUID = res.user.uid;
-                this.checkUser();
+            // 1. 기존 가입자의 아이디/비번 로그인
+            loginIdPw: async function() {
+                const id = document.getElementById('login-id').value;
+                const pw = document.getElementById('login-pw').value;
+                if(!id || !pw) return alert("아이디와 비밀번호를 입력하세요.");
+
+                // 데이터베이스에서 아이디와 비번이 일치하는 유저 찾기
+                const snapshot = await db.collection("users").where("gameId", "==", id).where("gamePw", "==", pw).get();
+                if(snapshot.empty) return alert("아이디나 비밀번호가 틀렸습니다.");
+
+                const doc = snapshot.docs[0];
+                if(doc.data().banned) return alert("관리자에 의해 접속이 차단된 계정입니다.");
+
+                myUID = doc.id;
+                balance = doc.data().balance;
+                window.myGameId = id;
+                this.start(id);
             },
-            checkUser: async function() {
-                const doc = await db.collection("users").doc(myUID).get();
-                if (doc.exists) {
-                    balance = doc.data().balance;
-                    this.start(doc.data().gameId);
-                } else {
-                    document.getElementById('step-1').style.display = 'none';
-                    document.getElementById('step-2').style.display = 'block';
+
+            // 2. 신규 가입을 위한 구글 인증
+            registerGoogle: async function() {
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    const res = await auth.signInWithPopup(provider);
+                    myUID = res.user.uid;
+                    
+                    // 이미 가입된 구글 계정인지 확인
+                    const doc = await db.collection("users").doc(myUID).get();
+                    if (doc.exists) {
+                        alert("이미 가입된 구글 계정입니다. 만드신 아이디로 로그인해주세요.");
+                        auth.signOut();
+                    } else {
+                        document.getElementById('step-login').style.display = 'none';
+                        document.getElementById('step-register').style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error(error);
                 }
             },
+
+            // 3. 아이디/비번 등록 및 생성 완료
             completeReg: async function() {
-                const gid = document.getElementById('reg-id').value;
-                if(!gid) return alert("닉네임을 입력하세요.");
-                await db.collection("users").doc(myUID).set({ gameId: gid, balance: 1000, email: auth.currentUser.email });
+                const id = document.getElementById('reg-id').value;
+                const pw = document.getElementById('reg-pw').value;
+                if(!id || !pw) return alert("아이디와 비밀번호를 모두 입력하세요.");
+
+                // 아이디 중복 체크
+                const idCheck = await db.collection("users").where("gameId", "==", id).get();
+                if(!idCheck.empty) return alert("이미 존재하는 아이디입니다. 다른 아이디를 입력하세요.");
+
+                await db.collection("users").doc(myUID).set({ 
+                    gameId: id, 
+                    gamePw: pw, 
+                    balance: 1000, 
+                    email: auth.currentUser.email,
+                    banned: false // 차단 여부
+                });
+                
                 balance = 1000;
-                this.start(gid);
+                window.myGameId = id;
+                this.start(id);
             },
+
+            // 4. 로그아웃
+            logout: function() {
+                auth.signOut();
+                location.reload(); // 페이지 새로고침하여 초기화
+            },
+
             start: function(id) {
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('game-ui').style.display = 'block';
+                document.getElementById('display-id').innerText = id;
                 this.updateUI();
+                
+                if(id === ADMIN_ID) {
+                    this.showMessage("관리자님 환영합니다! (` 키로 콘솔 열기)", "#2ecc71");
+                }
             },
+            
             updateUI: function() {
                 document.getElementById('balance').innerText = Math.floor(balance).toLocaleString();
                 document.getElementById('current-bet').innerText = currentBet.toLocaleString();
                 document.getElementById('grind-count').innerText = grindCount;
             },
-            addBet: function(amount) {
-                currentBet += amount;
-                this.updateUI();
-            },
-            resetBet: function() {
-                currentBet = 0;
-                this.updateUI();
-            },
+            
+            addBet: function(amount) { currentBet += amount; this.updateUI(); },
+            resetBet: function() { currentBet = 0; this.updateUI(); },
+            
             grind: async function() {
                 grindCount++;
                 if (grindCount >= 10) {
-                    balance += 1;
-                    grindCount = 0;
+                    balance += 1; grindCount = 0;
                     this.showMessage("1원을 벌었습니다!", "#2ecc71");
                     await db.collection("users").doc(myUID).update({ balance: balance });
                 }
                 this.updateUI();
             },
+            
             spin: async function() {
                 if (currentBet <= 0) return this.showMessage("베팅금을 설정하세요!", "#e74c3c");
                 if (currentBet > balance) return this.showMessage("소지금이 부족합니다!", "#e74c3c");
@@ -183,9 +255,7 @@
                 for (let s in counts) { if (counts[s] >= 2) { won = true; winSymbol = s; break; } }
 
                 if (won) {
-                    let m = multipliers[winSymbol];
-                    let prize = currentBet * m;
-                    balance += prize;
+                    let m = multipliers[winSymbol]; let prize = currentBet * m; balance += prize;
                     this.showMessage(m === 0 ? `[${winSymbol}] 꽝! (0배)` : `🎉 당첨! [${winSymbol}] ${m}배! ${Math.floor(prize).toLocaleString()}원 획득!`, "#f1c40f");
                 } else {
                     this.showMessage("아쉽네요!", "#95a5a6");
@@ -193,6 +263,7 @@
                 this.updateUI();
                 await db.collection("users").doc(myUID).update({ balance: balance });
             },
+            
             getRandomSymbol: function() {
                 let rand = Math.random() * 100; let sum = 0;
                 for (let symbol in probabilities) {
@@ -200,26 +271,27 @@
                     if (rand < sum) return symbol;
                 }
             },
+            
             showMessage: function(text, color) {
                 const m = document.getElementById('message');
                 m.innerText = text; m.style.color = color;
             }
         };
 
-        // 명령어 시스템
+        // --- 💻 어드민 콘솔 시스템 ---
         const consoleEl = document.getElementById('console');
         const consoleInput = document.getElementById('console-input');
 
         document.addEventListener('keydown', (e) => {
             if (e.key === '`') {
                 e.preventDefault();
-                if (auth.currentUser?.email !== ADMIN_EMAIL) return;
+                // 지정된 관리자 아이디인지 확인
+                if (window.myGameId !== ADMIN_ID) return; 
+
                 if (consoleEl.style.display === 'block') {
-                    consoleEl.style.display = 'none';
-                    consoleInput.blur();
+                    consoleEl.style.display = 'none'; consoleInput.blur();
                 } else {
-                    consoleEl.style.display = 'block';
-                    consoleInput.focus();
+                    consoleEl.style.display = 'block'; consoleInput.focus();
                 }
             }
         });
@@ -230,14 +302,52 @@
                 consoleInput.value = '';
                 consoleEl.style.display = 'none';
 
+                // 1. /set me coin [수량]
                 if (parts[0] === '/set' && parts[1] === 'me' && parts[2] === 'coin') {
                     let val = parseInt(parts[3]);
                     if (!isNaN(val)) {
-                        balance = val;
-                        window.game.updateUI();
+                        balance = val; window.game.updateUI();
                         await db.collection("users").doc(myUID).update({ balance: balance });
-                        window.game.showMessage(`[치트] 소지금을 ${val.toLocaleString()}원으로 변경`, "#3498db");
+                        window.game.showMessage(`[치트] 내 소지금을 ${val.toLocaleString()}원으로 변경`, "#3498db");
                     }
+                }
+                
+                // 2. /give [아이디] coin [수량]
+                else if (parts[0] === '/give' && parts[2] === 'coin' && parts.length === 4) {
+                    let targetId = parts[1];
+                    let amount = parseInt(parts[3]);
+                    
+                    if (!isNaN(amount)) {
+                        const targetUser = await db.collection("users").where("gameId", "==", targetId).get();
+                        if(targetUser.empty) {
+                            window.game.showMessage(`[오류] '${targetId}' 아이디를 찾을 수 없습니다.`, "#e74c3c");
+                        } else {
+                            const targetDoc = targetUser.docs[0];
+                            // 대상 유저 DB에 코인 추가
+                            await targetDoc.ref.update({ balance: firebase.firestore.FieldValue.increment(amount) });
+                            
+                            // 만약 본인에게 줬다면 화면에도 바로 반영
+                            if(targetId === window.myGameId) { balance += amount; window.game.updateUI(); }
+                            window.game.showMessage(`[치트] '${targetId}'에게 코인 ${amount.toLocaleString()}개 지급 완료`, "#2ecc71");
+                        }
+                    }
+                }
+                
+                // 3. /ban [아이디]
+                else if (parts[0] === '/ban' && parts.length === 2) {
+                    let targetId = parts[1];
+                    const targetUser = await db.collection("users").where("gameId", "==", targetId).get();
+                    if(targetUser.empty) {
+                        window.game.showMessage(`[오류] '${targetId}' 아이디를 찾을 수 없습니다.`, "#e74c3c");
+                    } else {
+                        const targetDoc = targetUser.docs[0];
+                        await targetDoc.ref.update({ banned: true }); // 차단 상태로 변경
+                        window.game.showMessage(`[제재] '${targetId}' 유저를 영구 차단했습니다.`, "#e74c3c");
+                    }
+                }
+                
+                else {
+                    window.game.showMessage("알 수 없는 명령어입니다.", "#e74c3c");
                 }
             }
         });
