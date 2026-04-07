@@ -293,7 +293,7 @@
                     const logs = await db.collection("logs")
                                         .where("targetId", "==", targetId)
                                         .orderBy("timestamp", "desc")
-                                        .limit(50).get();
+                                        .limit(500).get();
                     
                     if(logs.empty) {
                         content.innerHTML = "기록이 없습니다.";
