@@ -42,6 +42,7 @@
             animation: neon-pulse 2s infinite alternate;
             min-height: 100vh;
             border: 5px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 50px;
         }
 
         #top-bar { position: relative; padding: 15px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; z-index: 100; background: rgba(0,0,0,0.6); border-bottom: 2px solid #333; }
@@ -76,6 +77,20 @@
         
         .data-list { max-height: 250px; overflow-y: auto; text-align: left; padding: 12px; background: #050505; border: 1px solid #444; margin-top: 10px; font-size: 13px; color: #ddd; border-radius: 8px; }
         .data-item { border-bottom: 1px solid #333; padding: 8px 0; line-height: 1.5; }
+
+        /* 바카라 전용 스타일 */
+        .baccarat-table { background: rgba(10, 30, 20, 0.9); padding: 20px; border-radius: 20px; display: inline-block; width: 90%; max-width: 600px; border: 3px solid #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.3); }
+        .cards-area { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+        .side { flex: 1; text-align: center; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px; border: 1px solid #444; }
+        .b-cards { display: flex; justify-content: center; gap: 10px; min-height: 120px; align-items: center; margin-top:10px; }
+        .b-card { width: 70px; height: 100px; background: white; color: black; border-radius: 8px; font-size: 30px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); border: 2px solid #ccc; font-family: Arial, sans-serif;}
+        .score { font-size: 22px; font-weight: bold; margin-top: 15px; color: #fff; }
+        .bet-targets { display: flex; gap: 10px; margin-bottom: 15px; }
+        .bac-target-btn { flex: 1; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; border: 2px solid #fff; background: #c0392b; color: white; opacity: 0.5; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.5); }
+        .bac-target-btn.active { opacity: 1; transform: translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0.5), 0 0 15px #fff; border-color: #ffd700; }
+        
+        .lobby-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 160px; height: 160px; border-radius: 20px; border: 3px solid #fff; font-size: 24px; font-weight: bold; cursor: pointer; transition: 0.3s; color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .lobby-btn:hover { transform: translateY(-5px); filter: brightness(1.2); }
     </style>
 </head>
 <body>
@@ -107,6 +122,7 @@
     </div>
 
     <div id="game-ui" style="display:none;">
+        
         <div id="top-bar">
             <button id="btn-attendance" class="ui-btn" onclick="window.game.openAttendance()">📅 출석체크</button>
             <button id="btn-cmd" class="ui-btn cmd-btn" onclick="window.game.openModal('cmd-overlay')">⌨️ 명령어(`)</button>
@@ -122,28 +138,94 @@
             <button id="btn-logout" onclick="location.reload()">로그아웃</button>
         </div>
 
-        <h1>MEGA JACKPOT</h1>
-        <div class="slot-container">
-            <div class="slot" id="slot1">❓</div>
-            <div class="slot" id="slot2">❓</div>
-            <div class="slot" id="slot3">❓</div>
-        </div>
-        <div id="message" style="font-size:19px; color:#ffd700; height:50px; font-weight:bold; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px; display:inline-block; margin-bottom:20px;">베팅을 시작하세요!</div>
-
-        <br>
-        <div class="controls">
-            <div style="margin-bottom:15px; font-size:18px; font-weight:bold; border-bottom: 1px solid #555; padding-bottom: 10px;">🔥 베팅액: <span id="current-bet" style="color:#00ffff; font-size:22px;">0</span></div>
-            <div class="bet-buttons">
-                <button onclick="window.game.addBet(1)">+1</button>
-                <button onclick="window.game.addBet(100)">+100</button>
-                <button onclick="window.game.addBet(1000)">+1k</button>
-                <button onclick="window.game.addBet(10000)">+10k</button>
-                <button onclick="window.game.addBet(100000)">+100k</button>
-                <button onclick="window.game.addBet(1000000)">+1m</button>
-                <button onclick="window.game.addBet(10000000)">+10m</button>
-                <button onclick="window.game.resetBet()" style="background: linear-gradient(180deg, #e74c3c, #c0392b); box-shadow: 0 3px 0 #7f241a;">Reset</button>
+        <div id="lobby-ui" style="display:none; padding-top: 50px;">
+            <h1 style="font-size: 40px; margin-bottom: 40px;">PLAY LOBBY</h1>
+            <div style="display:flex; justify-content:center; gap:30px; flex-wrap: wrap;">
+                <div class="lobby-btn" style="background: linear-gradient(135deg, #ff00de, #4a00e0);" onclick="window.game.showGame('slot')">
+                    <span style="font-size: 50px;">🎰</span>
+                    <span style="margin-top: 10px;">슬롯머신</span>
+                </div>
+                <div class="lobby-btn" style="background: linear-gradient(135deg, #2ecc71, #27ae60);" onclick="window.game.showGame('baccarat')">
+                    <span style="font-size: 50px;">🃏</span>
+                    <span style="margin-top: 10px;">바카라</span>
+                </div>
             </div>
-            <button class="btn-spin" onclick="window.game.spin()">🎰 SPIN!</button>
+        </div>
+
+        <div id="slot-ui" style="display:none;">
+            <button class="ui-btn" style="margin-bottom:10px; background:#444;" onclick="window.game.showGame('lobby')">⬅️ 로비로 돌아가기</button>
+            <h1>MEGA JACKPOT</h1>
+            <div class="slot-container">
+                <div class="slot" id="slot1">❓</div>
+                <div class="slot" id="slot2">❓</div>
+                <div class="slot" id="slot3">❓</div>
+            </div>
+            <br>
+            <div id="message" style="font-size:19px; color:#ffd700; height:50px; font-weight:bold; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px; display:inline-block; margin-bottom:20px;">베팅을 시작하세요!</div>
+            <br>
+            <div class="controls">
+                <div style="margin-bottom:15px; font-size:18px; font-weight:bold; border-bottom: 1px solid #555; padding-bottom: 10px;">🔥 베팅액: <span id="current-bet" style="color:#00ffff; font-size:22px;">0</span></div>
+                <div class="bet-buttons">
+                    <button onclick="window.game.addBet(1)">+1</button>
+                    <button onclick="window.game.addBet(100)">+100</button>
+                    <button onclick="window.game.addBet(1000)">+1k</button>
+                    <button onclick="window.game.addBet(10000)">+10k</button>
+                    <button onclick="window.game.addBet(100000)">+100k</button>
+                    <button onclick="window.game.addBet(1000000)">+1m</button>
+                    <button onclick="window.game.addBet(10000000)">+10m</button>
+                    <button onclick="window.game.resetBet()" style="background: linear-gradient(180deg, #e74c3c, #c0392b); box-shadow: 0 3px 0 #7f241a;">Reset</button>
+                </div>
+                <button class="btn-spin" onclick="window.game.spin()">🎰 SPIN!</button>
+            </div>
+        </div>
+
+        <div id="baccarat-ui" style="display:none;">
+            <button class="ui-btn" style="margin-bottom:10px; background:#444;" onclick="window.game.showGame('lobby')">⬅️ 로비로 돌아가기</button>
+            <h1>BACCARAT</h1>
+            
+            <div class="baccarat-table">
+                <div class="cards-area">
+                    <div class="side">
+                        <h2 style="color:#e74c3c; font-family:'Black Han Sans'; margin:0;">Banker</h2>
+                        <div class="score" id="banker-score">Score: 0</div>
+                        <div class="b-cards" id="banker-cards">
+                            <div class="b-card" style="background:#555; color:#555;">?</div>
+                            <div class="b-card" style="background:#555; color:#555;">?</div>
+                        </div>
+                    </div>
+                    <div class="side">
+                        <h2 style="color:#3498db; font-family:'Black Han Sans'; margin:0;">Player</h2>
+                        <div class="score" id="player-score">Score: 0</div>
+                        <div class="b-cards" id="player-cards">
+                            <div class="b-card" style="background:#555; color:#555;">?</div>
+                            <div class="b-card" style="background:#555; color:#555;">?</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="bac-message" style="font-size:18px; color:#ffd700; margin: 15px 0; height:30px; font-weight:bold;">베팅 위치를 선택하세요.</div>
+
+                <div class="bet-targets">
+                    <button class="bac-target-btn" id="target-banker" onclick="window.game.selectBacTarget('banker')" style="background:#c0392b;">Banker (1:0.95)</button>
+                    <button class="bac-target-btn" id="target-tie" onclick="window.game.selectBacTarget('tie')" style="background:#27ae60;">Tie (1:8)</button>
+                    <button class="bac-target-btn" id="target-player" onclick="window.game.selectBacTarget('player')" style="background:#2980b9;">Player (1:1)</button>
+                </div>
+
+                <div class="controls" style="margin-top:10px; margin-bottom:0; width:100%; box-sizing:border-box;">
+                    <div style="margin-bottom:15px; font-size:18px; font-weight:bold; border-bottom: 1px solid #555; padding-bottom: 10px;">현재 베팅: <span id="bac-bet-amount" style="color:#00ffff; font-size:22px;">0</span></div>
+                    <div class="bet-buttons" style="grid-template-columns: repeat(5, 1fr);">
+                        <button onclick="window.game.addBacBet(1000)">1K</button>
+                        <button onclick="window.game.addBacBet(10000)">10K</button>
+                        <button onclick="window.game.addBacBet(100000)">100K</button>
+                        <button onclick="window.game.addBacBet(1000000)">1M</button>
+                        <button onclick="window.game.addBacBet(10000000)">10M</button>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button class="btn-spin" onclick="window.game.resetBacBet()" style="background: linear-gradient(180deg, #e74c3c, #c0392b); margin-top:0; padding:12px; font-size:16px; flex:1;">초기화</button>
+                        <button class="btn-spin" id="btn-deal" onclick="window.game.dealBaccarat()" style="background:linear-gradient(180deg, #2ecc71, #27ae60); box-shadow: 0 6px 0 #1e8449; margin-top:0; padding:12px; font-size:20px; flex:2;">🃏 DEAL</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -189,15 +271,15 @@
     </div></div>
 
     <script>
-    // 🔴 [필독] Firebase Config 값을 여기에 꼭 넣으세요!
+    // 🔴 [필독] Firebase Config 
     const firebaseConfig = {
-  apiKey: "AIzaSyBF9sb_UYjPt6J_O7g6p4FkLSbggUC6cfM",
-  authDomain: "gumurings-slot-game.firebaseapp.com",
-  projectId: "gumurings-slot-game",
-  storageBucket: "gumurings-slot-game.firebasestorage.app",
-  messagingSenderId: "1006027725856",
-  appId: "1:1006027725856:web:b7e5d7b55eac14dc377045"
-};
+      apiKey: "AIzaSyBF9sb_UYjPt6J_O7g6p4FkLSbggUC6cfM",
+      authDomain: "gumurings-slot-game.firebaseapp.com",
+      projectId: "gumurings-slot-game",
+      storageBucket: "gumurings-slot-game.firebasestorage.app",
+      messagingSenderId: "1006027725856",
+      appId: "1:1006027725856:web:b7e5d7b55eac14dc377045"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -218,6 +300,11 @@
         let balance = 0, currentBet = 0, myUID = "", userData = null;
         let isSpinning = false, tempSignupEmail = "";
         const multipliers = { '💎': 10, '💰': 7, '🍀': 3, '💣': 0 };
+
+        // 바카라 관련 변수
+        let bacBetAmount = 0;
+        let bacTarget = null;
+        let isBaccaratPlaying = false;
 
         function parseAmount(str) {
             str = String(str).toLowerCase().trim();
@@ -243,7 +330,14 @@
             openModal: (id) => document.getElementById(id).style.display = 'flex',
             closeModal: (id) => { document.getElementById(id).style.display = 'none'; },
 
-            // 1. 일반 로그인 (아이디/비번)
+            // 화면 전환 함수
+            showGame: function(gameType) {
+                document.getElementById('lobby-ui').style.display = 'none';
+                document.getElementById('slot-ui').style.display = 'none';
+                document.getElementById('baccarat-ui').style.display = 'none';
+                document.getElementById(gameType + '-ui').style.display = 'block';
+            },
+
             login: async function() {
                 const id = document.getElementById('login-id').value.trim();
                 const pw = document.getElementById('login-pw').value.trim();
@@ -258,50 +352,41 @@
                 this.start(id);
             },
 
-            // 2. 구글 연동 회원가입 시작
             signupWithGoogle: function() {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 firebase.auth().signInWithPopup(provider).then(async (result) => {
                     const email = result.user.email;
-                    
-                    // 이미 가입된 이메일인지 체크
                     const snap = await db.collection("users").where("email", "==", email).get();
                     if(!snap.empty) {
                         alert("이미 사용된 메일입니다!");
-                        firebase.auth().signOut(); // 세션 제거
+                        firebase.auth().signOut();
                         return;
                     }
-                    
-                    // 새 이메일이면 계정 생성 창으로 이동
                     tempSignupEmail = email;
                     document.getElementById('auth-overlay').style.display = 'none';
                     document.getElementById('signup-overlay').style.display = 'flex';
-                    
                 }).catch(err => {
                     console.error(err);
                     alert("구글 로그인 취소 또는 오류가 발생했습니다.");
                 });
             },
 
-            // 3. 구글 연동 후 최종 아이디/비번 생성
             finalizeSignup: async function() {
                 const id = document.getElementById('new-id').value.trim();
                 const pw = document.getElementById('new-pw').value.trim();
                 if(!id || !pw) return alert("사용할 아이디와 비밀번호를 입력하세요.");
 
-                // 아이디 중복 검사
                 const snap = await db.collection("users").where("gameId", "==", id).get();
                 if(!snap.empty) return alert("이미 다른 사람이 사용 중인 아이디입니다.");
 
-                // DB에 저장 (이메일 정보 포함)
                 const newUser = await db.collection("users").add({
                     gameId: id, gamePw: pw, email: tempSignupEmail, 
-                    balance: 5000, role: 'user', isBanned: false, 
+                    balance: 10000, role: 'user', isBanned: false, 
                     lastAttendance: null, consecutiveDays: 0
                 });
                 
-                alert("가입 성공! 보너스 5,000 코인이 지급되었습니다.");
-                firebase.auth().signOut(); // 구글 로그인 세션은 연결 용도이므로 바로 해제
+                alert("가입 성공! 보너스 10,000 코인이 지급되었습니다.");
+                firebase.auth().signOut(); 
                 
                 myUID = newUser.id;
                 window.myGameId = id;
@@ -312,6 +397,7 @@
             start: function(id) {
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('game-ui').style.display = 'block';
+                this.showGame('lobby'); // 시작 시 로비 띄우기
 
                 db.collection("users").doc(myUID).onSnapshot(doc => {
                     if(!doc.exists) return;
@@ -355,6 +441,7 @@
                 this.closeModal('att-overlay');
             },
 
+            // =============== 슬롯 로직 ===============
             addBet: (n) => { currentBet += n; document.getElementById('current-bet').innerText = currentBet.toLocaleString(); },
             resetBet: () => { currentBet = 0; document.getElementById('current-bet').innerText = "0"; },
 
@@ -397,6 +484,110 @@
                 setTimeout(() => { isSpinning = false; }, 600);
             },
 
+            // =============== 바카라 로직 ===============
+            selectBacTarget: function(target) {
+                if(isBaccaratPlaying) return;
+                bacTarget = target;
+                document.querySelectorAll('.bac-target-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('target-' + target).classList.add('active');
+                document.getElementById('bac-message').innerText = `${target.toUpperCase()}에 베팅합니다. 칩을 올려주세요.`;
+            },
+            
+            addBacBet: function(amount) {
+                if(isBaccaratPlaying) return;
+                if(!bacTarget) return alert("먼저 Banker, Tie, Player 중 하나를 선택하세요!");
+                bacBetAmount += amount;
+                document.getElementById('bac-bet-amount').innerText = bacBetAmount.toLocaleString();
+            },
+            
+            resetBacBet: function() {
+                if(isBaccaratPlaying) return;
+                bacBetAmount = 0;
+                document.getElementById('bac-bet-amount').innerText = "0";
+            },
+
+            dealBaccarat: async function() {
+                if(isBaccaratPlaying) return;
+                if(!bacTarget || bacBetAmount <= 0) return alert("베팅 구역을 선택하고 금액을 걸어주세요!");
+                if(balance < bacBetAmount) return alert("잔액이 부족합니다.");
+
+                isBaccaratPlaying = true;
+                document.getElementById('btn-deal').style.opacity = '0.5';
+                
+                // 돈 선차감
+                await db.collection("users").doc(myUID).update({ balance: firebase.firestore.FieldValue.increment(-bacBetAmount) });
+                document.getElementById('bac-message').innerText = "카드 딜링 중...";
+
+                // 카드 뽑기 함수 (J, Q, K는 10으로 취급하여 0점)
+                const drawCard = () => {
+                    let num = Math.floor(Math.random() * 13) + 1;
+                    let val = num >= 10 ? 0 : num;
+                    let display = num === 1 ? "A" : (num === 11 ? "J" : (num === 12 ? "Q" : (num === 13 ? "K" : num)));
+                    return { val, display };
+                };
+
+                let pCards = [drawCard(), drawCard()];
+                let bCards = [drawCard(), drawCard()];
+
+                const getScore = (cards) => cards.reduce((sum, c) => sum + c.val, 0) % 10;
+                let pScore = getScore(pCards);
+                let bScore = getScore(bCards);
+
+                const updateUI = () => {
+                    document.getElementById('player-cards').innerHTML = pCards.map(c => `<div class="b-card">${c.display}</div>`).join('');
+                    document.getElementById('banker-cards').innerHTML = bCards.map(c => `<div class="b-card">${c.display}</div>`).join('');
+                    document.getElementById('player-score').innerText = "Score: " + pScore;
+                    document.getElementById('banker-score').innerText = "Score: " + bScore;
+                };
+
+                updateUI();
+
+                // 딜레이 후 3번째 카드 드로우 및 결과 판정
+                setTimeout(async () => {
+                    // 내추럴이 아닐 때 추가 드로우 룰 간소화 적용 (5 이하 드로우)
+                    if (pScore < 8 && bScore < 8) {
+                        if (pScore <= 5) pCards.push(drawCard());
+                        pScore = getScore(pCards);
+                        
+                        if (bScore <= 5) bCards.push(drawCard());
+                        bScore = getScore(bCards);
+                        updateUI();
+                    }
+
+                    // 승패 판정
+                    let winner = 'tie';
+                    if (pScore > bScore) winner = 'player';
+                    else if (bScore > pScore) winner = 'banker';
+
+                    let msg = "";
+                    let winAmount = 0;
+
+                    if (bacTarget === winner) {
+                        if (winner === 'banker') { winAmount = bacBetAmount * 1.95; msg = `뱅커 승! ${winAmount.toLocaleString()} 코인 획득! (수수료 5%)`; }
+                        else if (winner === 'player') { winAmount = bacBetAmount * 2; msg = `플레이어 승! ${winAmount.toLocaleString()} 코인 획득!`; }
+                        else if (winner === 'tie') { winAmount = bacBetAmount * 9; msg = `타이 적중! ${winAmount.toLocaleString()} 코인 획득!`; }
+                    } else if (winner === 'tie' && bacTarget !== 'tie') {
+                        winAmount = bacBetAmount; // 타이가 나오면 뱅커/플레이어 베팅금은 돌려줌 (Push)
+                        msg = "무승부 (Tie). 베팅금이 반환됩니다.";
+                    } else {
+                        msg = `${winner.toUpperCase()} 승리. 아쉽네요.`;
+                    }
+
+                    document.getElementById('bac-message').innerText = msg;
+
+                    if (winAmount > 0) {
+                        await db.collection("users").doc(myUID).update({ balance: firebase.firestore.FieldValue.increment(winAmount) });
+                        if(winAmount > bacBetAmount) {
+                            logAction(window.myGameId, `[바카라 당첨] ${winner} 적중, ${Math.floor(winAmount).toLocaleString()}원 획득`);
+                        }
+                    }
+                    
+                    isBaccaratPlaying = false;
+                    document.getElementById('btn-deal').style.opacity = '1';
+                }, 1500); 
+            },
+
+            // =============== 명령어 및 기타 로직 ===============
             executeCommand: async function() {
                 const inputEl = document.getElementById('cmd-input');
                 const parts = inputEl.value.trim().split(/\s+/);
@@ -423,7 +614,6 @@
                 const targetRef = snap.docs[0].ref;
                 const tData = snap.docs[0].data();
 
-                // 🚨 추가된 기능: 가입된 이메일 확인 명령어
                 if (cmd === '/check' && item === 'mail') {
                     const email = tData.email || "구글 연동 이전에 가입한 구형 계정 (이메일 없음)";
                     alert(`[${targetId}]님의 가입 이메일:\n${email}`);
